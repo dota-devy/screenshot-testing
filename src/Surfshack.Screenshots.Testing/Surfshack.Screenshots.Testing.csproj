@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <PackageId>Surfshack.Screenshots.Testing</PackageId>
+    <Version>0.3.0</Version>
+    <Authors>Surfshack Software Services</Authors>
+    <Company>Surfshack Software Services</Company>
+    <Copyright>Copyright (c) Surfshack Software Services</Copyright>
+    <Description>Reusable Playwright screenshot test pattern for ASP.NET Core apps, including animation filmstrip capture. Wires up a deterministic, CI-friendly UI screenshot suite in ~50-100 lines of project-specific code.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>playwright;screenshot;testing;aspnetcore;xunit;visual-testing;ui-testing</PackageTags>
+    <PackageProjectUrl>https://gitlab.com/surfshack/screenshot-testing-oss</PackageProjectUrl>
+    <RepositoryUrl>https://gitlab.com/surfshack/screenshot-testing-oss</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <PackageReleaseNotes>
+      0.3.0
+      - New: ScreenshotFixtureBaseNoDb&lt;TFactory&gt; for consumers without EF Core.
+      - New: ViewportSpec record; presets Desktop/Mobile/Tablet/Wide; consumers can declare custom sizes inline.
+      - Change: graduates off the 0.x-alpha track.
+      - Breaking: BrowserContextHelpers.NewAnonContextAsync / NewAuthedContextAsync now take ViewportSpec instead of string.
+      - Breaking: ScreenshotTestsBase.GetCases signature changed to GetCases(routes, viewports).
+      - Breaking: IScreenshotFixture context methods take ViewportSpec.
+      - AuthedUserId is now virtual with default String.Empty (was abstract).
+    </PackageReleaseNotes>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Playwright" Version="1.60.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
+    <PackageReference Include="xunit.assert" Version="2.9.3" />
+    <PackageReference Include="xunit.extensibility.core" Version="2.9.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Filmstrip\Fonts\JetBrainsMono-Regular.ttf">
+      <LogicalName>Surfshack.Screenshots.Testing.Filmstrip.Fonts.JetBrainsMono-Regular.ttf</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Surfshack.Screenshots.Testing.Tests" />
+  </ItemGroup>
+</Project>

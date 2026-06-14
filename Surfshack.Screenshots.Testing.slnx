@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/MinimalConsumer/MinimalConsumer.csproj" />
+    <Project Path="samples/NoDbSample/NoDbSample.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Surfshack.Screenshots.Testing/Surfshack.Screenshots.Testing.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Surfshack.Screenshots.Testing.Tests/Surfshack.Screenshots.Testing.Tests.csproj" />
+  </Folder>
+</Solution>

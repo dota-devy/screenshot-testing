@@ -1,0 +1,15 @@
+@model IEnumerable<MinimalConsumer.Data.Widget>
+@{ Layout = null; }
+<!DOCTYPE html>
+<html>
+<head><title>My Widgets</title></head>
+<body>
+  <h1>My Widgets</h1>
+  <ul>
+    @foreach (var w in Model)
+    {
+      <li>@w.Name — $@w.Price</li>
+    }
+  </ul>
+</body>
+</html>

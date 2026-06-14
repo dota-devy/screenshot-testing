@@ -1,0 +1,81 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+stages:
+  - test
+  - publish
+
+variables:
+  NUGET_PACKAGES: "$CI_PROJECT_DIR/.nuget/packages"
+
+# ============================================================================
+# Unit + end-to-end tests — uses Microsoft's official Playwright .NET image,
+# which ships the .NET SDK plus Chromium binaries and system dependencies
+# pre-installed (keep the tag's Playwright version in sync with the
+# Microsoft.Playwright PackageReference). Auto-retries on runner system
+# failures so transient pod-startup timeouts self-recover.
+# ============================================================================
+run-tests:
+  stage: test
+  image:
+    name: mcr.microsoft.com/playwright/dotnet:v1.60.0-noble
+    pull_policy: always
+  variables:
+    MINIMAL_CONSUMER_TEST_DB: "DataSource=/tmp/minimal-consumer-test.db;Mode=ReadWriteCreate;Cache=Shared"
+    NUGET_PACKAGES: "$CI_PROJECT_DIR/.nuget/packages"
+    CI_JOB_USER: gitlab-ci-token
+  cache:
+    key: "nuget-cache-$CI_DEFAULT_BRANCH"
+    paths:
+      - .nuget/packages
+    policy: pull-push
+  before_script:
+    - dotnet restore Surfshack.Screenshots.Testing.slnx
+    - dotnet build Surfshack.Screenshots.Testing.slnx --no-restore
+  script:
+    - dotnet test Surfshack.Screenshots.Testing.slnx --no-build --logger "junit;LogFilePath=$CI_PROJECT_DIR/TestResults/test-results.xml" -v n
+  artifacts:
+    when: always
+    paths:
+      - TestResults/
+      - tests/Surfshack.Screenshots.Testing.Tests/bin/*/*/TestResults/screenshots/
+    reports:
+      junit: TestResults/test-results.xml
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success
+
+# ============================================================================
+# Pack + publish to the project's GitLab NuGet registry (main only). Runs in
+# the publish stage after run-tests succeeds — does not need Playwright or
+# Chromium, so it uses the lightweight .NET SDK image.
+# ============================================================================
+publish-package:
+  stage: publish
+  image:
+    name: mcr.microsoft.com/dotnet/sdk:10.0
+    pull_policy: always
+  variables:
+    NUGET_PACKAGES: "$CI_PROJECT_DIR/.nuget/packages"
+    CI_JOB_USER: gitlab-ci-token
+  script:
+    - dotnet pack src/Surfshack.Screenshots.Testing/Surfshack.Screenshots.Testing.csproj -c Release -o ./nupkg
+    - dotnet nuget add source "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/nuget/index.json" --name gitlab --username gitlab-ci-token --password "${CI_JOB_TOKEN}" --store-password-in-clear-text
+    - dotnet nuget push "./nupkg/*.nupkg" --source gitlab --skip-duplicate
+  artifacts:
+    paths:
+      - nupkg/
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success
