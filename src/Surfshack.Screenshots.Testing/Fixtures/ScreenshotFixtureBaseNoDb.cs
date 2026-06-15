@@ -35,10 +35,23 @@ public abstract class ScreenshotFixtureBaseNoDb<TFactory> : IAsyncLifetime, IScr
     /// </summary>
     protected virtual IScreenshotSeeder? Seeder => null;
 
+    /// <summary>
+    /// External hosts (exact match, case-insensitive) permitted through hermetic routing,
+    /// in addition to the loopback app under test. Default is empty — fully hermetic, so
+    /// every non-loopback request is aborted for reproducible captures. Override to allow
+    /// resources the page genuinely needs to render faithfully, e.g.
+    /// <c>["fonts.googleapis.com", "fonts.gstatic.com", "cdnjs.cloudflare.com"]</c>.
+    /// </summary>
+    /// <remarks>
+    /// Allowing live hosts reintroduces a network dependency in CI; prefer self-hosting
+    /// where practical and keep this list as small as possible.
+    /// </remarks>
+    protected virtual IReadOnlyCollection<string> AllowedExternalHosts => Array.Empty<string>();
+
     public async Task InitializeAsync()
     {
-        Factory = CreateFactory();
-        _ = Factory.CreateClient();  // triggers KestrelTestFactoryBase.CreateHost
+        // Construct + start the factory, retrying the known first-run TestServer race.
+        Factory = await FactoryStartup.CreateStartedAsync(CreateFactory);
         BaseUrl = Factory.ServerAddress.TrimEnd('/');
 
         if (Seeder is not null)
@@ -55,10 +68,10 @@ public abstract class ScreenshotFixtureBaseNoDb<TFactory> : IAsyncLifetime, IScr
     }
 
     public Task<IBrowserContext> AnonContextAsync(ViewportSpec viewport)
-        => BrowserContextHelpers.NewAnonContextAsync(Browser, viewport);
+        => BrowserContextHelpers.NewAnonContextAsync(Browser, viewport, AllowedExternalHosts);
 
     public Task<IBrowserContext> AuthedContextAsync(ViewportSpec viewport, string testUserId)
-        => BrowserContextHelpers.NewAuthedContextAsync(Browser, viewport, testUserId);
+        => BrowserContextHelpers.NewAuthedContextAsync(Browser, viewport, testUserId, AllowedExternalHosts);
 
     public async Task DisposeAsync()
     {

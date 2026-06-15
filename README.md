@@ -15,6 +15,21 @@ keep the browser from reaching the public internet, and filter the console noise
 otherwise fail every assertion. This package captures all of those decisions once, behind a
 small, overridable surface, so each new consumer doesn't have to relearn them.
 
+## The real superpower: agents that can see their own work
+
+Increasingly the code that builds a web UI isn't written by a human — it's written by an AI
+agent. And an agent has the same blind spot every developer has, only total: it emits a
+thousand lines of HTML and CSS and has **no idea what the page actually looks like**.
+
+This package closes that loop. Point an agent at it and the agent can build a page, capture a
+real screenshot of it, *look at the image*, judge it, and iterate — fixing the crushed header,
+the bruise-colored button, the card that never rendered — all without a human in the middle.
+Deterministic, hermetic captures are exactly what makes this work: the same input yields the
+same pixels, so an agent's "did my change help?" comparison is meaningful rather than noisy.
+
+In other words, it gives AI-built websites a feedback loop: **build → see → judge → refine**,
+run by the agent itself. (This very repository's consumer UI was refined that way.)
+
 ## Features
 
 - **Dual-host factory** — runs your app under real Kestrel while keeping
@@ -26,8 +41,10 @@ small, overridable surface, so each new consumer doesn't have to relearn them.
   before capture.
 - **Header-based test auth** — `TestAuthHandler` authenticates requests from an `X-Test-User`
   header, so authed pages render without a real login flow.
-- **Hermetic rendering** — non-loopback requests are aborted, animations are disabled, and
-  network/CORS console errors are filtered out, so screenshots are stable across runs.
+- **Hermetic rendering** — non-loopback requests are aborted, animations are disabled,
+  scroll-reveal content is forced visible, and network/CORS console errors are filtered out,
+  so screenshots are stable and complete across runs. Need a real font/icon CDN? Opt specific
+  hosts back in with `AllowedExternalHosts`.
 - **Any viewports** — built-in `ViewportSpec` presets (Desktop, Mobile, Tablet, Wide) plus
   inline custom sizes.
 - **Filmstrip capture** — record N frames after a trigger and compose them into a single

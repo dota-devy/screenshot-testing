@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <PackageId>Surfshack.Screenshots.Testing</PackageId>
-    <Version>0.3.0</Version>
+    <Version>0.4.1</Version>
     <Authors>Surfshack Software Services</Authors>
     <Company>Surfshack Software Services</Company>
     <Copyright>Copyright (c) Surfshack Software Services</Copyright>
@@ -19,6 +19,20 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <PackageReleaseNotes>
+      0.4.1
+      - Fix: scroll-reveal content now captured. IntersectionObserver is neutralized in the
+        browser context so elements that start hidden (opacity:0) and reveal on scroll are
+        rendered in headless full-page screenshots instead of staying invisible.
+      - Fix: first-run TestServer race. Fixture startup retries the intermittent
+        "server has not been started" error from the dual-host pattern (common on cold CI),
+        so consumers no longer need pipeline retries.
+
+      0.4.0
+      - New: opt-in AllowedExternalHosts on both fixture bases. Permits specific external
+        hosts (e.g. font/icon CDNs) through hermetic routing so captures render faithfully;
+        default stays empty (fully hermetic). Allowing live hosts reintroduces a network
+        dependency, so prefer self-hosting and keep the list small.
+
       0.3.0
       - New: ScreenshotFixtureBaseNoDb&lt;TFactory&gt; for consumers without EF Core.
       - New: ViewportSpec record; presets Desktop/Mobile/Tablet/Wide; consumers can declare custom sizes inline.
@@ -33,7 +47,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.9" />
-    <PackageReference Include="Microsoft.Playwright" Version="1.60.0" />
+    <PackageReference Include="Microsoft.Playwright" Version="1.50.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
     <PackageReference Include="xunit.assert" Version="2.9.3" />
