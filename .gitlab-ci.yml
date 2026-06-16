@@ -22,7 +22,7 @@ variables:
 run-tests:
   stage: test
   image:
-    name: mcr.microsoft.com/playwright/dotnet:v1.50.0-noble
+    name: mcr.microsoft.com/playwright/dotnet:v1.60.0-noble
     pull_policy: always
   variables:
     MINIMAL_CONSUMER_TEST_DB: "DataSource=/tmp/minimal-consumer-test.db;Mode=ReadWriteCreate;Cache=Shared"
@@ -57,9 +57,13 @@ run-tests:
       when: on_success
 
 # ============================================================================
-# Pack + publish to the project's GitLab NuGet registry (main only). Runs in
-# the publish stage after run-tests succeeds — does not need Playwright or
-# Chromium, so it uses the lightweight .NET SDK image.
+# Pack + publish (main only). Pushes the same nupkg to two feeds: the project's
+# GitLab NuGet registry (internal consumers, authed with CI_JOB_TOKEN) and the
+# public nuget.org feed (authed with a masked + protected NUGET_API_KEY CI
+# variable). Runs in the publish stage after run-tests succeeds — needs neither
+# Playwright nor Chromium, so it uses the lightweight .NET SDK image.
+# --skip-duplicate makes re-runs on an already-published version a no-op on both
+# feeds instead of a hard failure.
 # ============================================================================
 publish-package:
   stage: publish
@@ -71,8 +75,11 @@ publish-package:
     CI_JOB_USER: gitlab-ci-token
   script:
     - dotnet pack src/Surfshack.Screenshots.Testing/Surfshack.Screenshots.Testing.csproj -c Release -o ./nupkg
+    # GitLab NuGet feed (internal consumers)
     - dotnet nuget add source "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/nuget/index.json" --name gitlab --username gitlab-ci-token --password "${CI_JOB_TOKEN}" --store-password-in-clear-text
     - dotnet nuget push "./nupkg/*.nupkg" --source gitlab --skip-duplicate
+    # Public nuget.org feed
+    - dotnet nuget push "./nupkg/*.nupkg" --api-key "${NUGET_API_KEY}" --source https://api.nuget.org/v3/index.json --skip-duplicate
   artifacts:
     paths:
       - nupkg/
