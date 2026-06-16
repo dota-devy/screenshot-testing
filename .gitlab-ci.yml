@@ -22,7 +22,7 @@ variables:
 run-tests:
   stage: test
   image:
-    name: mcr.microsoft.com/playwright/dotnet:v1.50.0-noble
+    name: mcr.microsoft.com/playwright/dotnet:v1.60.0-noble
     pull_policy: always
   variables:
     MINIMAL_CONSUMER_TEST_DB: "DataSource=/tmp/minimal-consumer-test.db;Mode=ReadWriteCreate;Cache=Shared"
