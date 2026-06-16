@@ -60,7 +60,7 @@ run by the agent itself. (This very repository's consumer UI was refined that wa
 ## Installation
 
 ```xml
-<PackageReference Include="Surfshack.Screenshots.Testing" Version="0.3.*" />
+<PackageReference Include="Surfshack.Screenshots.Testing" Version="0.4.*" />
 ```
 
 ## Quick start (DB-backed)
