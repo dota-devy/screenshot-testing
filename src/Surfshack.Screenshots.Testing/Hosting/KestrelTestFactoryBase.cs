@@ -15,9 +15,16 @@ namespace Surfshack.Screenshots.Testing.Hosting;
 /// </summary>
 public interface IKestrelTestFactory
 {
+    /// <summary>The real Kestrel-bound base URL (e.g. <c>http://127.0.0.1:35421</c>) Playwright navigates to.</summary>
     string ServerAddress { get; }
+
+    /// <summary>The running application's root DI container, for resolving services (e.g. in a seeder).</summary>
     IServiceProvider Services { get; }
+
+    /// <summary>Creates an <see cref="HttpClient"/> against the WAF TestServer host. Also forces host startup.</summary>
     HttpClient CreateClient();
+
+    /// <summary>Stops and disposes both the Kestrel and TestServer hosts.</summary>
     ValueTask DisposeAsync();
 }
 
@@ -56,7 +63,7 @@ public abstract class KestrelTestFactoryBase<TProgram>
 
     /// <summary>
     /// The actual Kestrel-bound URL (e.g. <c>http://127.0.0.1:35421</c>).
-    /// Populated after the first call to <see cref="WebApplicationFactory{T}.CreateClient"/>.
+    /// Populated after the first call to <see cref="WebApplicationFactory{TEntryPoint}.CreateClient()"/>.
     /// </summary>
     public string ServerAddress { get; private set; } = string.Empty;
 
@@ -68,12 +75,21 @@ public abstract class KestrelTestFactoryBase<TProgram>
     /// </summary>
     protected abstract void ConfigureProject(IWebHostBuilder builder);
 
+    /// <summary>
+    /// Sealed. Applies the consumer's <see cref="ConfigureProject"/> configuration, then installs
+    /// the package's test authentication scheme. Sealed so every consumer gets the auth wiring.
+    /// </summary>
     protected sealed override void ConfigureWebHost(IWebHostBuilder builder)
     {
         ConfigureProject(builder);
         InstallTestAuthHandler(builder);
     }
 
+    /// <summary>
+    /// Sealed. Builds both the WAF TestServer host and the real Kestrel host (see the type-level
+    /// remarks for why), exposing the Kestrel address via <see cref="ServerAddress"/>. Disposes
+    /// partially-built hosts on failure so a throwing startup never leaks a host.
+    /// </summary>
     protected sealed override IHost CreateHost(IHostBuilder builder)
     {
         var testHost = builder.Build();
@@ -106,6 +122,10 @@ public abstract class KestrelTestFactoryBase<TProgram>
         }
     }
 
+    /// <summary>
+    /// Stops and disposes the Kestrel host, then defers to the base
+    /// <see cref="WebApplicationFactory{TEntryPoint}"/> to tear down the TestServer host.
+    /// </summary>
     public override async ValueTask DisposeAsync()
     {
         if (_kestrelHost is not null)

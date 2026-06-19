@@ -19,7 +19,7 @@ namespace Surfshack.Screenshots.Testing.Filmstrip;
 /// recommended pattern is to define the hover rule against both <c>:hover</c>
 /// and a helper class (e.g. <c>.is-hovered</c>), then pass a trigger that does
 /// <c>locator.EvaluateAsync("el =&gt; el.classList.add('is-hovered')")</c>.</para>
-/// <para>If your <see cref="IScreenshotFixture"/> injects a global
+/// <para>If your <see cref="Fixtures.IScreenshotFixture"/> injects a global
 /// <c>* { transition-duration: 0s !important }</c> stylesheet to make static
 /// screenshots deterministic, strip it before calling this helper — the cleanest
 /// path is removing the fixture's injected <c>&lt;style&gt;</c> element entirely
@@ -119,11 +119,9 @@ public static class FilmstripCapture
 
             for (int i = 0; i < frames.Count; i++)
             {
-                var x = pad + i * (frameWidth + options.TileGap);
-                var y = pad;
+                var tileX = pad + i * (frameWidth + options.TileGap);
+                var tileY = pad;
                 var frame = frames[i];
-                var tileX = x;
-                var tileY = y;
                 canvas.Mutate(c => c.DrawImage(frame, new Point(tileX, tileY), 1f));
 
                 if (labelFont is not null)

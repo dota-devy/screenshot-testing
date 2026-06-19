@@ -10,5 +10,12 @@ namespace Surfshack.Screenshots.Testing.Fixtures;
 /// </summary>
 public interface IScreenshotSeeder
 {
+    /// <summary>
+    /// Populates the data the screenshot routes depend on.
+    /// </summary>
+    /// <param name="services">
+    /// The running application's DI container, from which to resolve a <c>DbContext</c>,
+    /// repositories, or other services needed to seed state.
+    /// </param>
     Task SeedAsync(IServiceProvider services);
 }

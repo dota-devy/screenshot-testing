@@ -44,6 +44,17 @@ public static class BrowserContextHelpers
         };
     """;
 
+    /// <summary>
+    /// Create an anonymous (unauthenticated) browser context sized to <paramref name="viewport"/>,
+    /// with animations disabled, scroll-reveal content forced visible, and hermetic network routing.
+    /// </summary>
+    /// <param name="browser">The shared Playwright browser to create the context from.</param>
+    /// <param name="viewport">Viewport dimensions for the context.</param>
+    /// <param name="allowedHosts">
+    /// Optional exact-match (case-insensitive) host allowlist permitted through hermetic routing.
+    /// Null or empty keeps the context fully hermetic.
+    /// </param>
+    /// <returns>A new <see cref="IBrowserContext"/>; the caller owns disposal.</returns>
     public static async Task<IBrowserContext> NewAnonContextAsync(
         IBrowser browser,
         ViewportSpec viewport,
@@ -57,6 +68,19 @@ public static class BrowserContextHelpers
         return context;
     }
 
+    /// <summary>
+    /// Create an authenticated browser context sized to <paramref name="viewport"/>. Identical to
+    /// <see cref="NewAnonContextAsync"/> but also sends the test auth header so the app under test
+    /// sees <paramref name="testUserId"/> as the signed-in user.
+    /// </summary>
+    /// <param name="browser">The shared Playwright browser to create the context from.</param>
+    /// <param name="viewport">Viewport dimensions for the context.</param>
+    /// <param name="testUserId">User id surfaced to the app's authentication via the test header.</param>
+    /// <param name="allowedHosts">
+    /// Optional exact-match (case-insensitive) host allowlist permitted through hermetic routing.
+    /// Null or empty keeps the context fully hermetic.
+    /// </param>
+    /// <returns>A new <see cref="IBrowserContext"/>; the caller owns disposal.</returns>
     public static async Task<IBrowserContext> NewAuthedContextAsync(
         IBrowser browser,
         ViewportSpec viewport,

@@ -7,6 +7,12 @@ namespace Surfshack.Screenshots.Testing.Tests;
 /// </summary>
 public static class ScreenshotConsoleFilter
 {
+    /// <summary>
+    /// Returns <c>true</c> if <paramref name="consoleText"/> is a network/CORS failure expected
+    /// under hermetic routing (aborted non-loopback request, blocked font/script/stylesheet/fetch),
+    /// and should therefore not fail the screenshot test.
+    /// </summary>
+    /// <param name="consoleText">The console message text to classify.</param>
     public static bool IsIgnorableNetworkError(string consoleText)
     {
         if (string.IsNullOrEmpty(consoleText))

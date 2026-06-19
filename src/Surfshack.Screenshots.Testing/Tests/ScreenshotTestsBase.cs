@@ -19,6 +19,11 @@ public abstract class ScreenshotTestsBase<TFixture> where TFixture : IScreenshot
 {
     private readonly TFixture _fixture;
 
+    /// <summary>
+    /// Initializes the base with the shared collection fixture supplying the browser,
+    /// base URL, and screenshot root.
+    /// </summary>
+    /// <param name="fixture">The xUnit collection fixture for this screenshot suite.</param>
     protected ScreenshotTestsBase(TFixture fixture)
     {
         _fixture = fixture;
@@ -77,6 +82,20 @@ public abstract class ScreenshotTestsBase<TFixture> where TFixture : IScreenshot
                 };
     }
 
+    /// <summary>
+    /// Navigates to one route in one viewport and writes a full-page PNG to
+    /// <c>{ScreenshotRoot}/{viewport}/{slug}.png</c>. Asserts the response is OK (or a 302
+    /// redirect), the page has a non-empty title, the file was written, and that no
+    /// non-ignorable console errors occurred. This is the method consumers' <c>[Theory]</c>
+    /// wrappers delegate to.
+    /// </summary>
+    /// <param name="viewport">Viewport to size the browser context to.</param>
+    /// <param name="slug">Route identifier; resolved to a URL via <see cref="RouteUrlFor"/> and used as the filename.</param>
+    /// <param name="authed">Whether to use an authenticated browser context (see <see cref="AuthedUserId"/>).</param>
+    /// <param name="cartSessionCookie">
+    /// Optional session-cookie value to inject before navigation (cookie name from
+    /// <see cref="SessionCookieName"/>); empty to skip.
+    /// </param>
     public async Task Capture(ViewportSpec viewport, string slug, bool authed, string cartSessionCookie)
     {
         await using var context = authed
