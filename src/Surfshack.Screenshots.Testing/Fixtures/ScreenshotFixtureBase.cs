@@ -20,9 +20,19 @@ public abstract class ScreenshotFixtureBase<TFactory, TDbContext> : IAsyncLifeti
 {
     private IPlaywright? _playwright;
 
+    /// <inheritdoc />
     public IBrowser Browser { get; private set; } = null!;
+
+    /// <summary>
+    /// The running test factory (WAF + Kestrel dual host). Exposed so tests and seeders
+    /// can resolve services from <see cref="IKestrelTestFactory.Services"/> if needed.
+    /// </summary>
     public TFactory Factory { get; private set; } = default!;
+
+    /// <inheritdoc />
     public string BaseUrl { get; private set; } = string.Empty;
+
+    /// <inheritdoc />
     public string ScreenshotRoot { get; private set; } = string.Empty;
 
     /// <summary>
@@ -73,6 +83,11 @@ public abstract class ScreenshotFixtureBase<TFactory, TDbContext> : IAsyncLifeti
     /// </remarks>
     protected virtual IReadOnlyCollection<string> AllowedExternalHosts => Array.Empty<string>();
 
+    /// <summary>
+    /// xUnit lifecycle hook. Reads the connection string, runs migrations and the
+    /// <see cref="PreHostBootstrapAsync"/> hook against a bootstrap context, starts the
+    /// test factory, invokes the <see cref="Seeder"/>, then launches headless Chromium.
+    /// </summary>
     public async Task InitializeAsync()
     {
         var connectionString = Environment.GetEnvironmentVariable(ConnectionStringEnvVar)
@@ -106,12 +121,18 @@ public abstract class ScreenshotFixtureBase<TFactory, TDbContext> : IAsyncLifeti
         // avoids needing to know the consumer's Viewports list here.
     }
 
+    /// <inheritdoc />
     public Task<IBrowserContext> AnonContextAsync(ViewportSpec viewport)
         => BrowserContextHelpers.NewAnonContextAsync(Browser, viewport, AllowedExternalHosts);
 
+    /// <inheritdoc />
     public Task<IBrowserContext> AuthedContextAsync(ViewportSpec viewport, string testUserId)
         => BrowserContextHelpers.NewAuthedContextAsync(Browser, viewport, testUserId, AllowedExternalHosts);
 
+    /// <summary>
+    /// xUnit lifecycle hook. Writes the screenshot <c>index.md</c>, then tears down the
+    /// browser, Playwright, and the test factory.
+    /// </summary>
     public async Task DisposeAsync()
     {
         ScreenshotIndexWriter.Write(ScreenshotRoot);

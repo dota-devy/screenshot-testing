@@ -17,9 +17,17 @@ public class TestAuthHandler(
     UrlEncoder encoder)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
+    /// <summary>Name of the authentication scheme this handler registers and is wired to as the default.</summary>
     public const string SchemeName = "Test";
+
+    /// <summary>Request header carrying the test user id (<c>X-Test-User</c>). Set per browser context.</summary>
     public const string UserHeaderName = "X-Test-User";
 
+    /// <summary>
+    /// Authenticates the request from the <see cref="UserHeaderName"/> header: returns a successful
+    /// ticket with a <see cref="ClaimsPrincipal"/> for the supplied user id, or
+    /// <see cref="AuthenticateResult.NoResult"/> when the header is absent or empty.
+    /// </summary>
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         if (!Request.Headers.TryGetValue(UserHeaderName, out var userIdValues))
