@@ -33,7 +33,7 @@ public abstract class ScreenshotTestsBase<TFixture> where TFixture : IScreenshot
     /// Routes captured by this test class. Order is preserved in the screenshot
     /// suite output and the index.md table of contents.
     /// </summary>
-    protected abstract IEnumerable<RouteCase> Routes { get; }
+    protected abstract IEnumerable<RouteTestCase> Routes { get; }
 
     /// <summary>
     /// Maps a route slug to its actual URL. Called at test execution time
@@ -53,7 +53,7 @@ public abstract class ScreenshotTestsBase<TFixture> where TFixture : IScreenshot
 
     /// <summary>
     /// The cookie name used for the session-cookie injection on routes that
-    /// supply a <see cref="RouteCase.CartSessionCookie"/>. Defaults to
+    /// supply a <see cref="RouteTestCase.CartSessionCookie"/>. Defaults to
     /// <c>SessionId</c>; override for projects using a different cookie name.
     /// </summary>
     protected virtual string SessionCookieName => "SessionId";
@@ -63,12 +63,12 @@ public abstract class ScreenshotTestsBase<TFixture> where TFixture : IScreenshot
     /// xUnit's <c>[MemberData]</c> attribute. Usage:
     /// <code>
     /// private static readonly ViewportSpec[] _viewports = { ViewportSpec.Desktop, ViewportSpec.Mobile };
-    /// private static readonly RouteCase[] _routes = { new("home", false) };
+    /// private static readonly RouteTestCase[] _routes = { new("home", false) };
     /// public static IEnumerable&lt;object[]&gt; Cases() =&gt; GetCases(_routes, _viewports);
     /// </code>
     /// </summary>
     protected static IEnumerable<object[]> GetCases(
-        IEnumerable<RouteCase> routes,
+        IEnumerable<RouteTestCase> routes,
         IEnumerable<ViewportSpec> viewports)
     {
         foreach (var viewport in viewports)

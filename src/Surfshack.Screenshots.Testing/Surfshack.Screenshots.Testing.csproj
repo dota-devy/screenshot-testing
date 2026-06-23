@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <PackageId>Surfshack.Screenshots.Testing</PackageId>
-    <Version>0.4.2</Version>
+    <Version>0.5.0</Version>
     <Authors>Surfshack Software Services</Authors>
     <Company>Surfshack Software Services</Company>
     <Copyright>Copyright (c) Surfshack Software Services</Copyright>
@@ -22,6 +22,14 @@
          can never ship an undocumented public member or a broken doc reference. -->
     <WarningsAsErrors>$(WarningsAsErrors);CS1591;CS1572;CS1573;CS1574;CS1580;CS1584;CS1587;CS0419</WarningsAsErrors>
     <PackageReleaseNotes>
+      0.5.0
+      - BREAKING: renamed the public record `RouteCase` to `RouteTestCase` for clarity
+        (it describes one test case for a route). Update `RouteCase` -> `RouteTestCase`
+        in your test classes when upgrading. No behavioral change.
+      - Docs: README quick-start rewritten to be step-by-step, with every overridable
+        member, what it does, and whether it's required, plus a clear explanation of
+        RouteTestCase and RouteUrlFor.
+
       0.4.2
       - Docs: complete XML documentation across the entire public API surface; missing-doc
         and malformed-cref warnings are now promoted to build errors so the doc surface

@@ -14,14 +14,14 @@ public class MinimalConsumerScreenshots(MinimalConsumerFixture fixture)
         ViewportSpec.Mobile,
     };
 
-    private static readonly RouteCase[] _routes = new[]
+    private static readonly RouteTestCase[] _routes = new[]
     {
-        new RouteCase("widgets-index", Authed: false),
-        new RouteCase("widgets-detail", Authed: false),
-        new RouteCase("widgets-mine", Authed: true),
+        new RouteTestCase("widgets-index", Authed: false),
+        new RouteTestCase("widgets-detail", Authed: false),
+        new RouteTestCase("widgets-mine", Authed: true),
     };
 
-    protected override IEnumerable<RouteCase> Routes => _routes;
+    protected override IEnumerable<RouteTestCase> Routes => _routes;
 
     public static IEnumerable<object[]> Cases() => GetCases(_routes, _viewports);
 
