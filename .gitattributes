@@ -1,0 +1,11 @@
+# Normalize line endings: store all text files with LF in the repository.
+# Git auto-detects text vs binary; text files are checked in as LF regardless
+# of the contributor's platform, which keeps diffs clean and makes the
+# upstream-to-public snapshot a byte-for-byte copy.
+* text=auto eol=lf
+
+# Binary assets git must never touch or normalize.
+*.ttf binary
+*.png binary
+*.ico binary
+*.snk binary

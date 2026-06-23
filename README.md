@@ -299,6 +299,13 @@ environment variable your DB-backed fixture reads.
 - **Cross-browser** — Chromium only.
 - **Local-dev workflow** — designed for CI; wire up local runs yourself if you want them.
 
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for development setup,
+conventions, and how to open a merge request. Note that
+[GitLab](https://gitlab.com/surfshack/screenshot-testing-oss) is the authoritative repository;
+the GitHub copy is a read-only mirror.
+
 ## License
 
 [MIT](LICENSE). Bundles the [JetBrains Mono](https://www.jetbrains.com/lp/mono/) font for
