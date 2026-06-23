@@ -10,4 +10,4 @@ namespace Surfshack.Screenshots.Testing.Tests;
 /// need a populated server-side session (cart, checkout, etc.). The cookie name is
 /// project-specific and supplied by the consumer's test class.
 /// </param>
-public sealed record RouteCase(string Slug, bool Authed, string? CartSessionCookie = null);
+public sealed record RouteTestCase(string Slug, bool Authed, string? CartSessionCookie = null);

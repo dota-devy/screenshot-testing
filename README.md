@@ -60,32 +60,40 @@ run by the agent itself. (This very repository's consumer UI was refined that wa
 ## Installation
 
 ```xml
-<PackageReference Include="Surfshack.Screenshots.Testing" Version="0.4.*" />
+<PackageReference Include="Surfshack.Screenshots.Testing" Version="0.5.*" />
 ```
 
 ## Quick start (DB-backed)
 
-A consumer needs four small types. The complete, runnable version of the example below lives
-in [`samples/MinimalConsumer/`](samples/MinimalConsumer/) and is exercised by this repo's own
-test project.
+You write **four small types** in your test project. Three are nearly boilerplate — a factory, a
+seeder, and a fixture that wires them together — and the fourth, the test class, is the only one
+with real decisions: it lists the pages to capture. Each step below shows exactly what to write
+and what each piece does. The complete, runnable version lives in
+[`samples/MinimalConsumer/`](samples/MinimalConsumer/) and is exercised by this repo's own test
+project.
 
-**1. A factory** — subclass `KestrelTestFactoryBase<Program>` and supply project-specific
-configuration:
+**1. A factory** — subclass `KestrelTestFactoryBase<Program>`. Its only job is to feed your app
+the configuration it needs to boot under test (connection strings, fake API keys, feature flags):
 
 ```csharp
 public sealed class MyAppTestFactory(string connectionString)
     : KestrelTestFactoryBase<Program>
 {
+    // Called by the base class while it builds the host. Push in whatever settings
+    // your app reads at startup — here, just the database connection string.
     protected override void ConfigureProject(IWebHostBuilder builder) =>
         builder.UseSetting("ConnectionStrings:Default", connectionString);
 }
 ```
 
-**2. A seeder** — implement `IScreenshotSeeder` against your domain model:
+**2. A seeder** — implement `IScreenshotSeeder` to insert the data your pages need to render.
+It runs once, after migrations and before any screenshot is taken:
 
 ```csharp
 public sealed class MyAppSeeder : IScreenshotSeeder
 {
+    // 'services' is the *running app's* DI container, so resolve your real DbContext
+    // (or repositories) and write whatever the routes you capture will display.
     public async Task SeedAsync(IServiceProvider services)
     {
         await using var scope = services.CreateAsyncScope();
@@ -96,54 +104,70 @@ public sealed class MyAppSeeder : IScreenshotSeeder
 }
 ```
 
-**3. A fixture** — subclass `ScreenshotFixtureBase<TFactory, TDbContext>` and tell it how to
-build a bootstrap `DbContext` and the factory:
+**3. A fixture** — subclass `ScreenshotFixtureBase<TFactory, TDbContext>`. This binds the factory
+and seeder together and owns the browser. You supply three one-line overrides, plus the xUnit
+collection definition that lets every test class share a single seeded app and browser:
 
 ```csharp
+// xUnit boilerplate — declares the shared fixture for the collection. Copy as-is.
 [CollectionDefinition(ScreenshotCollection.Name)]
 public sealed class ScreenshotCollection : ICollectionFixture<MyAppScreenshotFixture>;
 
 public sealed class MyAppScreenshotFixture : ScreenshotFixtureBase<MyAppTestFactory, MyAppDbContext>
 {
+    // Which seeder to run (from step 2).
     protected override IScreenshotSeeder Seeder => new MyAppSeeder();
 
+    // How to build a DbContext for the one-time migrate step that runs before the app
+    // starts. Use the same EF Core provider your app uses (SQLite shown; Npgsql etc. work).
     protected override MyAppDbContext CreateBootstrapContext(string connectionString) =>
         new(new DbContextOptionsBuilder<MyAppDbContext>().UseSqlite(connectionString).Options);
 
+    // How to build your factory (from step 1).
     protected override MyAppTestFactory CreateFactory(string connectionString) =>
         new(connectionString);
 }
 ```
 
-**4. The tests** — subclass `ScreenshotTestsBase<TFixture>`, declare your routes and viewports,
-and add the thin xUnit `[Theory]` wrapper:
+**4. The test class** — this is the only class with real moving parts. Subclass
+`ScreenshotTestsBase<TFixture>` and provide **three required members** (plus one more only if
+you have logged-in pages). Start with the minimal version — two public pages, no auth:
 
 ```csharp
 [Collection(ScreenshotCollection.Name)]
 public sealed class MyAppScreenshots(MyAppScreenshotFixture fixture)
     : ScreenshotTestsBase<MyAppScreenshotFixture>(fixture)
 {
+    // The viewports every route is captured at. (More on viewports below.)
     private static readonly ViewportSpec[] _viewports = { ViewportSpec.Desktop, ViewportSpec.Mobile };
 
-    private static readonly RouteCase[] _routes =
+    // REQUIRED — the pages to screenshot, one RouteTestCase per page.
+    // RouteTestCase(slug, Authed): 'slug' is a short id used as the PNG filename and the
+    // test's display name; 'Authed: false' means capture the page logged-out.
+    private static readonly RouteTestCase[] _routes =
     [
-        new RouteCase("home", Authed: false),
-        new RouteCase("dashboard", Authed: true),
+        new RouteTestCase("home",  Authed: false),
+        new RouteTestCase("about", Authed: false),
     ];
 
-    protected override IEnumerable<RouteCase> Routes => _routes;
+    // REQUIRED — expose those same routes to the base class.
+    protected override IEnumerable<RouteTestCase> Routes => _routes;
 
+    // REQUIRED, but pure boilerplate — copy this line as-is. It's the data source
+    // xUnit expands into one test per (viewport × route).
     public static IEnumerable<object[]> Cases() => GetCases(_routes, _viewports);
 
+    // REQUIRED — map each route's slug to the URL path Playwright should visit.
+    // This is where "home" becomes "/" and "about" becomes "/about".
     protected override string RouteUrlFor(string slug) => slug switch
     {
-        "home"      => "/",
-        "dashboard" => "/dashboard",
+        "home"  => "/",
+        "about" => "/about",
         _ => throw new ArgumentOutOfRangeException(nameof(slug)),
     };
 
-    protected override string AuthedUserId => "test-user-id";
-
+    // REQUIRED, but pure boilerplate — the thin wrapper xUnit actually discovers as a
+    // test. It just forwards each generated case to the base's Capture method.
     [Theory]
     [MemberData(nameof(Cases))]
     public Task CaptureRoute(ViewportSpec viewport, string slug, bool authed, string cartSessionCookie)
@@ -151,11 +175,53 @@ public sealed class MyAppScreenshots(MyAppScreenshotFixture fixture)
 }
 ```
 
+That's a complete, runnable suite. Here's every member, whether you must provide it, and what
+value it takes:
+
+| Member | Required? | What it is / what to put |
+| --- | --- | --- |
+| `_routes` + `Routes` | **Yes** | The pages to capture. `_routes` is your array of `RouteTestCase`s; `Routes` just exposes it to the base class. |
+| `RouteUrlFor(slug)` | **Yes** | A `switch` (or any lookup) turning each route's `slug` into its URL path. Runs at test time, so it can reference IDs your seeder created (e.g. `$"/orders/{SeededOrderId}"`). |
+| `Cases()` + the `[Theory]` wrapper | **Yes** | Unavoidable boilerplate — copy both verbatim. They hand xUnit one test per viewport × route. (Why it can't live in the base class: see the note below.) |
+| `AuthedUserId` | Only if a route is `Authed: true` | The user id captured pages should be "logged in" as. Must match a user your seeder inserts. Defaults to empty. |
+| `SessionCookieName` | Rarely | Only override if you use `RouteTestCase`'s optional cookie field (below). Defaults to `"SessionId"`. |
+
+**What is a `RouteTestCase`?** A small record describing one page to capture:
+
+```csharp
+RouteTestCase(string Slug, bool Authed, string? CartSessionCookie = null)
+```
+
+- **`Slug`** — a short, filesystem-safe id (`"home"`, `"order-detail"`). Becomes the screenshot
+  filename and the test's display name. This is the value `RouteUrlFor` receives.
+- **`Authed`** — `false` captures the page logged-out; `true` captures it as a signed-in user
+  (see below).
+- **`CartSessionCookie`** *(optional, advanced)* — a session-cookie value to inject before
+  navigating, for pages that need server-side session state (a populated cart, a multi-step
+  form). Omit it unless you specifically need it; that's the `cartSessionCookie` parameter you
+  see flowing through the `[Theory]` wrapper.
+
+**Adding logged-in pages.** Mark the route `Authed: true` and set `AuthedUserId` to a user your
+seeder created. The package signs every request as that user via a test auth header, so authed
+pages render without a real login flow:
+
+```csharp
+private static readonly RouteTestCase[] _routes =
+[
+    new RouteTestCase("home",      Authed: false),
+    new RouteTestCase("dashboard", Authed: true),   // captured as a signed-in user
+];
+
+protected override string AuthedUserId => "test-user-id";  // must match a user your seeder inserts
+```
+
 Screenshots are written to `bin/<config>/<tfm>/TestResults/screenshots/<viewport>/<slug>.png`,
 with an `index.md` table of contents.
 
-> The 4-line `[Theory]`/`[MemberData]` wrapper is intentional: xUnit's data-discovery doesn't
-> traverse generic base classes, so the attributes have to live in the consumer's assembly.
+> Why the `Cases()` + `[Theory]`/`[MemberData]` boilerplate can't be hidden in the base class:
+> xUnit's data-discovery doesn't traverse generic base classes, so the data source and the
+> `[Theory]` attribute have to live in your assembly. It's the one piece of unavoidable
+> ceremony — copy it and move on.
 
 ## No-DB consumers
 

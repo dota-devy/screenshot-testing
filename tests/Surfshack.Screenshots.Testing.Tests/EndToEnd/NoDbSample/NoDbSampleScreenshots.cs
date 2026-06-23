@@ -14,13 +14,13 @@ public class NoDbSampleScreenshots(NoDbSampleFixture fixture)
         ViewportSpec.Wide,  // stresses the viewport generalization
     };
 
-    private static readonly RouteCase[] _routes =
+    private static readonly RouteTestCase[] _routes =
     {
         new("home", Authed: false),
         new("hello", Authed: false),
     };
 
-    protected override IEnumerable<RouteCase> Routes => _routes;
+    protected override IEnumerable<RouteTestCase> Routes => _routes;
 
     public static IEnumerable<object[]> Cases() => GetCases(_routes, _viewports);
 
